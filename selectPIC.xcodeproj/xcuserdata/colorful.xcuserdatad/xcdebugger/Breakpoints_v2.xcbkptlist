@@ -89,11 +89,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "selectPIC/selectMainVC.m"
-            timestampString = "473695916.329871"
+            timestampString = "474978675.201289"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "327"
-            endingLineNumber = "327">
+            startingLineNumber = "387"
+            endingLineNumber = "387">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -135,11 +135,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "selectPIC/selectMainVC.m"
-            timestampString = "473695487.57719"
+            timestampString = "474978675.201289"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "70"
-            endingLineNumber = "70"
+            startingLineNumber = "95"
+            endingLineNumber = "95"
             landmarkName = "-loadIMGData"
             landmarkType = "5">
          </BreakpointContent>

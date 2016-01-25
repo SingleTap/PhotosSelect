@@ -16,7 +16,8 @@
 
 #import "ShowIMGModel.h"
 
-@interface selectMainVC ()<UITableViewDataSource,UITableViewDelegate>
+
+@interface selectMainVC ()<UITableViewDataSource,UITableViewDelegate,PHPhotoLibraryChangeObserver>
 @property (nonatomic,strong)UITableView *tableView;
 
 @property (nonatomic,strong)NSMutableArray *groupNames;
@@ -40,13 +41,57 @@ static selectMainVC *singleView = nil;
     
     [self loadIMGData];
     
-    [self createTableView];
+    
+    if ([PHPhotoLibrary authorizationStatus]) {
+        [self createTableViewWithHiddenNav:NO];
+
+    }else{
+    
+        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(refreshNotification:) userInfo:nil repeats:YES];
+        
+//        [NSRunLoop currentRunLoop] addTimer:timer forMode:
+    }
+    
+    
+}
+- (void)refreshNotification:(NSTimer*)timer{
+    if ([PHPhotoLibrary authorizationStatus]) {
+        [self createTableViewWithHiddenNav:YES];
+        [self loadIMGData];
+        [timer invalidate];
+        timer = nil;
+        
+    }
     
     
 }
 
+- (void)photoLibraryDidChange:(PHChange *)changeInstance{
+
+//    if ([PHPhotoLibrary authorizationStatus]) {
+//        if (!self.groupNames.count) {
+//            [self createTableViewWithHiddenNav:YES];
+//            
+//            [self loadIMGData];
+//
+//            
+////            dispatch_async(dispatch_get_main_queue(), ^{
+////                [_tableView reloadData];
+////            });
+//        }
+//
+//    }
+    
+}
+
 - (void)loadIMGData{
-    self.groupNames = [NSMutableArray arrayWithCapacity:0];
+    
+
+
+    [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+    
+    
+        self.groupNames = [NSMutableArray arrayWithCapacity:0];
     
     // 列出所有相册智能相册
     PHFetchResult *smartAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAlbumRegular options:nil];
@@ -75,6 +120,8 @@ static selectMainVC *singleView = nil;
         
     }];
     
+
+    
     [topLevelUserCollections enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self.groupNames addObject:obj];
     }];
@@ -99,16 +146,25 @@ static selectMainVC *singleView = nil;
         //                NSLog(@"%@",asset);
         //            }
         //        }
+  
     }
-    
-    [self.tableView reloadData];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_tableView reloadData];
+    });
 }
 
 
 
-- (void)createTableView{
+- (void)createTableViewWithHiddenNav:(BOOL)nav{
     self.tableView = [[UITableView alloc]initWithFrame:self.view.frame
                                                  style:UITableViewStylePlain];
+    if (nav) {
+        _tableView.frame = CGRectMake(0, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
+        
+    }else{
+           _tableView.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height );
+    }
     self.tableView.dataSource       = self;
     self.tableView.delegate         = self;
     self.tableView.tableFooterView  = [[UIView alloc]init];
@@ -127,11 +183,24 @@ static selectMainVC *singleView = nil;
     if (!cell) {
         cell = [[SelectMainCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"Select"];
     }
+
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 50.0;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    
+    SelectMainCell *cells = (SelectMainCell*)cell;
+    
     PHAssetCollection *assetCollection = self.groupNames[indexPath.row];
     PHFetchResult   *assetsFetchResult = [PHAsset fetchAssetsInAssetCollection:assetCollection options:nil];
     
     if (assetsFetchResult.count > 0) {
-
+        
         PHCachingImageManager *imageManager = [[PHCachingImageManager alloc] init];
         
         [imageManager requestImageForAsset:assetsFetchResult[assetsFetchResult.count-1]
@@ -139,7 +208,7 @@ static selectMainVC *singleView = nil;
                                contentMode:PHImageContentModeAspectFill
                                    options:nil
                              resultHandler:^(UIImage *result, NSDictionary *info) {
-
+                                 
                                  /**
                                   All Photos:        所有照片
                                   Bursts:            连拍快照
@@ -170,21 +239,12 @@ static selectMainVC *singleView = nil;
                                      titleStr = assetCollection.localizedTitle;
                                  }
                                  
-                                 [cell configCellWithHeadIMG:result andTitle:titleStr andIMGCount:[NSString stringWithFormat:@"%lu",(unsigned long)assetsFetchResult.count]];
+                                 [cells configCellWithHeadIMG:result andTitle:titleStr andIMGCount:[NSString stringWithFormat:@"%lu",(unsigned long)assetsFetchResult.count]];
                                  
                              }];
     }
 
-
-    
-    return cell;
 }
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 50.0;
-}
-
-
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
